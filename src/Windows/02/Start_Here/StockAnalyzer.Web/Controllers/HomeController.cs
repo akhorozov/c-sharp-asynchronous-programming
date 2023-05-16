@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using StockAnalyzer.Core.Domain;
 using StockAnalyzer.Web.Models;
 using System.Diagnostics;
 
@@ -8,8 +10,18 @@ public class HomeController : Controller
 {
     private static string API_URL = "https://ps-async.fekberg.com/api/stocks";
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        using (HttpClient client = new HttpClient())
+        {
+            Task<HttpResponseMessage> responseTask = client.GetAsync($"{API_URL}/MSFT");
+            HttpResponseMessage response = await responseTask;
+
+            string content = await response.Content.ReadAsStringAsync();
+
+            IEnumerable<StockPrice>? data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
+        }
+
         return View();
     }
 

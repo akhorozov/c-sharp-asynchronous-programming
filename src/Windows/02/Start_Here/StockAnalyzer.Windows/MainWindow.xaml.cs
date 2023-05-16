@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using StockAnalyzer.Core;
 using StockAnalyzer.Core.Domain;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Navigation;
 
@@ -19,32 +19,39 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
-
-
-    private void Search_Click(object sender, RoutedEventArgs e)
+    private async void Search_Click(object sender, RoutedEventArgs e)
     {
-        BeforeLoadingStockData();
+        try
+        {
+            BeforeLoadingStockData();
 
-        var client = new WebClient();
-
-        var content = client.DownloadString($"{API_URL}/{StockIdentifier.Text}");
-
-        // Simulate that the web call takes a very long time
-        Thread.Sleep(10000);
-
-        var data = JsonConvert.DeserializeObject<IEnumerable<StockPrice>>(content);
-
-        Stocks.ItemsSource = data;
-
-        AfterLoadingStockData();
+            await GetStocks();
+        }
+        catch (Exception ex)
+        {
+            Notes.Text = ex.Message;
+        }
+        finally
+        {
+            AfterLoadingStockData();
+        }
     }
 
+    private async Task GetStocks()
+    {
+        try
+        {
+            DataStore store = new();
 
+            Task<IList<StockPrice>> responseTask = store.GetStockPrices(StockIdentifier.Text);
 
-
-
-
-
+            Stocks.ItemsSource = await responseTask;
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+    }
 
     private void BeforeLoadingStockData()
     {
